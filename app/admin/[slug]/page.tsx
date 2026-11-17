@@ -36,7 +36,8 @@ export default async function Dashboard({ params }: PageProps<"/admin/[slug]">) 
   const ai = getAI();
 
   const active = regs.filter((r) => r.status === "active");
-  const paid = active.filter((r) => r.paymentStatus === "verified");
+  const paid = active.filter((r) => r.paymentStatus === "verified" && !r.exempt);
+  const exempt = active.filter((r) => r.exempt);
   const queue = active.filter((r) => r.paymentStatus === "review" || r.paymentStatus === "mismatch");
   const money = (rs: typeof active) => rs.reduce((s, r) => s + (catById.get(r.categoryId)?.price ?? 0), 0);
 
@@ -46,7 +47,7 @@ export default async function Dashboard({ params }: PageProps<"/admin/[slug]">) 
     const urls = (await Promise.all(r.receipts.map((x) => repo.getFileUrl(x.storagePath)))).filter((u): u is string => !!u);
     return {
       id: r.id, bib: r.bibLabel, name: r.fullName, city: r.city, team: r.team, categoryId: r.categoryId, status: r.status,
-      payment: r.paymentStatus, flags: r.flags, receiptUrls: urls,
+      payment: r.paymentStatus, exempt: r.exempt, flags: r.flags, receiptUrls: urls,
       waConfirm: wa(confirmationMessage(r, event, cat, `${origin}/i/${r.accessToken}`)),
       waReminder: wa(paymentReminder(r, event, cat, r.flags, `${origin}/i/${r.accessToken}`)),
       kit: !!r.kitDeliveredAt, checkedInAt: r.checkedInAt,
@@ -92,7 +93,7 @@ export default async function Dashboard({ params }: PageProps<"/admin/[slug]">) 
         {event.hasKit && <StatCard label="Kits entregues" value={String(active.filter((r) => r.kitDeliveredAt).length)} />}
         <StatCard label="Arrecadado" value={formatBRLShort(money(paid))} wide />
       </section>
-      <p className="hint -mt-4">Previsto com todos pagando: {formatBRLShort(money(active))}.</p>
+      <p className="hint -mt-4">Previsto com todos pagando: {formatBRLShort(money(active.filter((r) => !r.exempt)))}.{exempt.length > 0 && ` ${exempt.length} ${exempt.length === 1 ? "isento" : "isentos"} (organização), fora do faturamento.`}</p>
 
       {low.length > 0 && (
         <section className="card border-amber-300 p-5">

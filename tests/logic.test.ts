@@ -182,6 +182,14 @@ describe("relatório do patrocinador", () => {
     expect(r.revenueExpected).toBe(210);
   });
 
+  it("isento conta como atleta, mas fica fora do arrecadado e do previsto", () => {
+    const comIsento = [...regs, reg({ id: "5", bibNumber: 5, categoryId: "c40", exempt: true })];
+    const x = buildSponsorReport(EVENT, CATEGORIES, comIsento, prizes);
+    expect(x.athletes).toBe(4);
+    expect(x.revenueVerified).toBe(160);
+    expect(x.revenueExpected).toBe(210);
+  });
+
   it("conta premiação e faixas de idade", () => {
     expect(r.prizePool).toBe(200);
     expect(r.trophies).toBe(1);

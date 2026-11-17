@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { getAI, AiUnavailableError, type AiFile } from "@/lib/ai";
 import { getRepo, RepoError } from "@/lib/repo";
 import { evaluateReceipt, replacePaymentFlags } from "@/lib/receipt";
@@ -13,7 +13,7 @@ export const MAX_FILE_BYTES = 6 * 1024 * 1024;
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
 export class ServiceError extends Error {
-  constructor(public code: "event_not_found" | "closed" | "category_not_found" | "invalid_birth_date" | "invalid_file" | "invalid_input" | "not_found", message: string) {
+  constructor(public code: "event_not_found" | "closed" | "category_not_found" | "invalid_birth_date" | "invalid_file" | "invalid_input" | "invalid_code" | "not_found", message: string) {
     super(message);
     this.name = "ServiceError";
   }
@@ -34,6 +34,14 @@ export interface RegistrationInput {
   termsAccepted: boolean;
   source?: RegistrationSource;
   file?: AiFile | null;
+  /** Código da organização: se confere com o do evento, a inscrição nasce isenta. */
+  exemptCode?: string | null;
+}
+
+/** Compara o código sem diferenciar maiúsculas e sem vazar o tamanho pelo tempo de resposta. */
+function codeMatches(given: string, expected: string): boolean {
+  const h = (v: string) => createHash("sha256").update(v.trim().toLowerCase()).digest();
+  return timingSafeEqual(h(given), h(expected));
 }
 
 export function validateFile(file: AiFile) {
@@ -100,10 +108,18 @@ export async function register(input: RegistrationInput): Promise<{ registration
   if (!category) throw new ServiceError("category_not_found", "Categoria não encontrada.");
   if (input.file) validateFile(input.file);
 
+  // Código da organização: com código certo a inscrição é isenta; código errado nunca vira inscrição paga por engano.
+  let exempt = false;
+  const given = input.exemptCode?.trim();
+  if (given) {
+    if (!event.exemptCode || !codeMatches(given, event.exemptCode)) throw new ServiceError("invalid_code", "Código da organização inválido.");
+    exempt = true;
+  }
+
   const whatsapp = normalizePhone(input.whatsapp) ?? input.whatsapp;
   const flags: Flag[] = categoryFlags(category, input.birthDate, ageReference(event), input.weightKg ?? null, input.gender ?? null);
   if (await repo.findActiveByWhatsapp(event.id, whatsapp)) flags.push("duplicate_whatsapp");
-  if (!input.file) flags.push("no_receipt");
+  if (!input.file && !exempt) flags.push("no_receipt");
 
   let registration: Registration;
   try {
@@ -112,13 +128,13 @@ export async function register(input: RegistrationInput): Promise<{ registration
       city: input.city?.trim() || null, team: input.team?.trim() || null, whatsapp, birthDate: input.birthDate,
       gender: input.gender ?? null, accessToken: newAccessToken(),
       weightKg: input.weightKg ?? null, emergencyContact: input.emergencyContact?.trim() || null,
-      termsAccepted: input.termsAccepted, source, paymentStatus: "pending", flags,
+      termsAccepted: input.termsAccepted, source, paymentStatus: exempt ? "verified" : "pending", exempt, flags,
     });
   } catch (e) {
     if (e instanceof RepoError && e.code === "invalid_birth_date") throw new ServiceError("invalid_birth_date", "Data de nascimento inválida.");
     throw e;
   }
-  if (input.file) registration = await storeReceipt(event, registration, category, input.file);
+  if (input.file && !exempt) registration = await storeReceipt(event, registration, category, input.file);
   return { registration, event, category };
 }
 
@@ -159,7 +175,7 @@ export async function attachReceiptByToken(token: string, file: AiFile) {
   return attachReceipt(reg.id, file);
 }
 
-export type AdminAction = "approve" | "reject" | "cancel" | "reopen" | "kit" | "unkit" | "uncheckin";
+export type AdminAction = "approve" | "reject" | "exempt" | "unexempt" | "cancel" | "reopen" | "kit" | "unkit" | "uncheckin";
 
 /** Decisões do organizador. Aprovar limpa só os alertas de pagamento. */
 export async function adminAction(registrationId: string, action: AdminAction) {
@@ -169,6 +185,9 @@ export async function adminAction(registrationId: string, action: AdminAction) {
   switch (action) {
     case "approve": return repo.updateRegistration(reg.id, { paymentStatus: "verified", flags: replacePaymentFlags(reg.flags, []) });
     case "reject": return repo.updateRegistration(reg.id, { paymentStatus: "mismatch" });
+    // Isento: organização/convidados. Fica liberado como pago, mas fora do faturamento.
+    case "exempt": return repo.updateRegistration(reg.id, { exempt: true, paymentStatus: "verified", flags: replacePaymentFlags(reg.flags, []) });
+    case "unexempt": return repo.updateRegistration(reg.id, { exempt: false, paymentStatus: "pending" });
     case "cancel": return repo.updateRegistration(reg.id, { status: "cancelled" });
     case "reopen": return repo.updateRegistration(reg.id, { status: "active" });
     case "kit": {

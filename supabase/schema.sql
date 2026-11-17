@@ -314,3 +314,13 @@ alter table events add column if not exists has_kit boolean not null default fal
 
 -- Presença registrada pelo QR da ficha ou pela lista de largada (só o primeiro horário vale)
 alter table registrations add column if not exists checked_in_at timestamptz;
+
+-- ---------------------------------------------------------------------
+-- Migração 003 (cópia para instalações novas): inscrição isenta
+-- ---------------------------------------------------------------------
+alter table registrations add column if not exists exempt boolean not null default false;
+
+-- ---------------------------------------------------------------------
+-- Migração 004 (cópia para instalações novas): código de isenção
+-- ---------------------------------------------------------------------
+alter table events add column if not exists exempt_code text;

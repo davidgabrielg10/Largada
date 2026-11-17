@@ -58,7 +58,7 @@ export function buildSponsorReport(
   const active = registrations.filter((r) => r.status === "active");
   const priceOf = new Map(categories.map((c) => [c.id, c.price]));
   const nameOf = new Map(categories.map((c) => [c.id, c.name]));
-  const verified = active.filter((r) => r.paymentStatus === "verified");
+  const verified = active.filter((r) => r.paymentStatus === "verified" && !r.exempt); // isentos não entram no faturamento
 
   const byCity = tally(active.map((r) => r.city));
   const byTeam = tally(active.map((r) => r.team));
@@ -77,7 +77,7 @@ export function buildSponsorReport(
     athletes: active.length,
     athletesPaid: verified.length,
     revenueVerified: verified.reduce((s, r) => s + (priceOf.get(r.categoryId) ?? 0), 0),
-    revenueExpected: active.reduce((s, r) => s + (priceOf.get(r.categoryId) ?? 0), 0),
+    revenueExpected: active.filter((r) => !r.exempt).reduce((s, r) => s + (priceOf.get(r.categoryId) ?? 0), 0),
     citiesCount: byCity.length,
     teamsCount: byTeam.length,
     byCity,

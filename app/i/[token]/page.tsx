@@ -35,7 +35,7 @@ export default async function Ficha({ params, searchParams }: PageProps<"/i/[tok
   const category = (await repo.listCategories(event.id)).find((c) => c.id === reg.categoryId);
   const origin = await getOrigin();
   const qr = await QRCode.toString(`${origin}/admin/entrada/${token}`, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#0d0d0e", light: "#ffffff" } });
-  const st = STATUS[reg.paymentStatus];
+  const st = reg.exempt ? { label: "Inscrição isenta", tone: "pill-ok", text: "Tudo certo. Sua vaga está garantida, sem pagamento." } : STATUS[reg.paymentStatus];
   const cancelled = reg.status === "cancelled";
   const canUpload = !cancelled && reg.paymentStatus !== "verified" && reg.receipts.length < 5;
 

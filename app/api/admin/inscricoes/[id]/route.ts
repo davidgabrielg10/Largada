@@ -5,7 +5,7 @@ import { adminAction, changeCategory, checkIn } from "@/lib/service";
 export const dynamic = "force-dynamic";
 
 const body = z.union([
-  z.object({ action: z.enum(["approve", "reject", "cancel", "reopen", "kit", "unkit", "checkin", "uncheckin"]) }),
+  z.object({ action: z.enum(["approve", "reject", "exempt", "unexempt", "cancel", "reopen", "kit", "unkit", "checkin", "uncheckin"]) }),
   z.object({ categoryId: z.string().min(1) }),
 ]);
 

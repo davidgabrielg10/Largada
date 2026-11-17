@@ -11,6 +11,7 @@ export interface ListRow {
   city: string | null;
   team: string | null;
   payment: PaymentStatus;
+  exempt: boolean;
   checkedInAt: string | null;
   kitAt: string | null;
 }
@@ -94,10 +95,10 @@ export function CheckinList({ groups: initial, hasKit }: { groups: ListGroup[]; 
                           <p className="font-bold leading-tight">{r.name}</p>
                           <p className="text-sm text-muted">{[r.city, r.team].filter(Boolean).join(" · ") || "—"}</p>
                         </td>
-                        <td className="hidden px-2 sm:table-cell"><span className={`pill ${PAY[r.payment][1]}`}>{PAY[r.payment][0]}</span></td>
+                        <td className="hidden px-2 sm:table-cell"><span className={`pill ${r.exempt ? "pill-ok" : PAY[r.payment][1]}`}>{r.exempt ? "Isento" : PAY[r.payment][0]}</span></td>
                         <td className="px-3 py-2 text-right">
                           <div className="print:hidden flex flex-col items-end gap-1 sm:flex-row sm:justify-end">
-                            <span className={`pill sm:hidden ${PAY[r.payment][1]}`}>{PAY[r.payment][0]}</span>
+                            <span className={`pill sm:hidden ${r.exempt ? "pill-ok" : PAY[r.payment][1]}`}>{r.exempt ? "Isento" : PAY[r.payment][0]}</span>
                             <button
                               disabled={busyId === r.id}
                               className={`btn btn-sm ${r.checkedInAt ? "btn-line" : "btn-red"}`}

@@ -40,6 +40,7 @@ export const registrationSchema = z.object({
     .refine((v) => v === null || (Number.isFinite(v) && v > 20 && v < 300), "Peso inválido."),
   gender: z.enum(["M", "F"]).optional().or(z.literal("").transform(() => undefined)),
   emergencyContact: optText(150),
+  exemptCode: optText(40),
   termsAccepted: z.string().optional().transform((v) => v === "true" || v === "on"),
 });
 
@@ -63,6 +64,7 @@ export const eventSchema = z.object({
   basePrice: z.coerce.number().min(0, "Valor inválido.").max(10000, "Valor inválido."),
   ageRule: z.enum(["event_date", "year_end"]).default("event_date"),
   hasKit: z.boolean().default(false),
+  exemptCode: optText(40),
 });
 
 export const categorySchema = z.object({

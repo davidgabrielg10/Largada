@@ -21,7 +21,7 @@ export default async function StartList({ params }: PageProps<"/admin/[slug]/lar
   const groups: ListGroup[] = cats.map((c) => ({
     id: c.id, name: c.name,
     rows: active.filter((r) => r.categoryId === c.id).sort((a, b) => a.bibNumber - b.bibNumber).map((r) => ({
-      id: r.id, bib: r.bibLabel, name: r.fullName, city: r.city, team: r.team, payment: r.paymentStatus, checkedInAt: r.checkedInAt, kitAt: r.kitDeliveredAt,
+      id: r.id, bib: r.bibLabel, name: r.fullName, city: r.city, team: r.team, payment: r.paymentStatus, exempt: r.exempt, checkedInAt: r.checkedInAt, kitAt: r.kitDeliveredAt,
     })),
   })).filter((g) => g.rows.length > 0);
 

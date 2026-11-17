@@ -66,6 +66,37 @@ describe("pipeline de inscrição", () => {
   });
 });
 
+describe("código de isenção da organização", () => {
+  const ligar = async () => { const repo = getRepo(); const ev = (await repo.listEvents())[0]; await repo.updateEvent(ev.id, { exemptCode: "Equipe-2026" }); };
+
+  it("código certo: inscrição nasce isenta, liberada e sem alerta de comprovante", async () => {
+    await ligar();
+    const { registration } = await register(base({ exemptCode: " equipe-2026 " })); // ignora caixa e espaços
+    expect(registration.exempt).toBe(true);
+    expect(registration.paymentStatus).toBe("verified");
+    expect(registration.flags).not.toContain("no_receipt");
+  });
+
+  it("código errado nunca vira inscrição paga por engano", async () => {
+    await ligar();
+    const evId = (await getRepo().listEvents())[0].id;
+    const antes = (await getRepo().listRegistrations(evId)).length;
+    await expect(register(base({ exemptCode: "outro" }))).rejects.toThrow(/inválido/);
+    expect((await getRepo().listRegistrations(evId)).length).toBe(antes);
+  });
+
+  it("evento sem código ligado recusa qualquer código", async () => {
+    await expect(register(base({ exemptCode: "equipe-2026" }))).rejects.toThrow(/inválido/);
+  });
+
+  it("sem código a inscrição segue o fluxo normal de pagamento", async () => {
+    await ligar();
+    const { registration } = await register(base());
+    expect(registration.exempt).toBe(false);
+    expect(registration.paymentStatus).toBe("pending");
+  });
+});
+
 describe("ações do organizador", () => {
   it("aprovar limpa só os alertas de pagamento", async () => {
     const { registration } = await register(base({ birthDate: "2000-01-01" }));
@@ -73,6 +104,17 @@ describe("ações do organizador", () => {
     expect(r.paymentStatus).toBe("verified");
     expect(r.flags).toContain("age_out_of_range");
     expect(r.flags).not.toContain("no_receipt");
+  });
+
+  it("isentar libera a inscrição sem pagamento; tirar a isenção volta para pendente", async () => {
+    const { registration } = await register(base());
+    const r = await adminAction(registration.id, "exempt");
+    expect(r.exempt).toBe(true);
+    expect(r.paymentStatus).toBe("verified");
+    expect(r.flags).not.toContain("no_receipt");
+    const back = await adminAction(registration.id, "unexempt");
+    expect(back.exempt).toBe(false);
+    expect(back.paymentStatus).toBe("pending");
   });
 
   it("trocar categoria recalcula alertas de idade", async () => {

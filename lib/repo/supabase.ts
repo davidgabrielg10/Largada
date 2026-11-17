@@ -11,7 +11,7 @@ const num = (v: unknown) => (v == null ? null : Number(v));
 const toEvent = (r: Row): EventRow => ({
   id: r.id, slug: r.slug, name: r.name, eventDate: r.event_date, city: r.city, description: r.description,
   pixKey: r.pix_key, basePrice: Number(r.base_price), registrationOpen: r.registration_open,
-  nextBib: r.next_bib, ageRule: r.age_rule ?? "event_date", hasKit: r.has_kit ?? false, isDemo: r.is_demo,
+  nextBib: r.next_bib, ageRule: r.age_rule ?? "event_date", hasKit: r.has_kit ?? false, exemptCode: r.exempt_code ?? null, isDemo: r.is_demo,
 });
 const toCategory = (r: Row): Category => ({
   id: r.id, eventId: r.event_id, name: r.name, price: Number(r.price), minAge: r.min_age, maxAge: r.max_age,
@@ -22,7 +22,7 @@ const toReg = (r: Row): Registration => ({
   id: r.id, eventId: r.event_id, categoryId: r.category_id, bibNumber: r.bib_number, bibLabel: r.bib_label,
   fullName: r.full_name, email: r.email, city: r.city, team: r.team, whatsapp: r.whatsapp, birthDate: r.birth_date,
   gender: r.gender ?? null, accessToken: r.access_token, kitDeliveredAt: r.kit_delivered_at ?? null, checkedInAt: r.checked_in_at ?? null, weightKg: num(r.weight_kg), emergencyContact: r.emergency_contact, termsAcceptedAt: r.terms_accepted_at,
-  source: r.source, status: r.status, paymentStatus: r.payment_status, flags: (r.flags ?? []) as Flag[],
+  source: r.source, status: r.status, paymentStatus: r.payment_status, exempt: !!r.exempt, flags: (r.flags ?? []) as Flag[],
   isDemo: r.is_demo, createdAt: r.created_at,
 });
 const toReceipt = (r: Row): Receipt => ({
@@ -67,7 +67,7 @@ export class SupabaseRepo implements Repo {
   async createEvent(i: NewEvent) {
     return toEvent(check(await this.db.from("events").insert({
       slug: i.slug, name: i.name, event_date: i.eventDate, city: i.city, description: i.description,
-      pix_key: i.pixKey, base_price: i.basePrice, age_rule: i.ageRule, has_kit: i.hasKit,
+      pix_key: i.pixKey, base_price: i.basePrice, age_rule: i.ageRule, has_kit: i.hasKit, exempt_code: i.exemptCode ?? null,
     }).select("*").single()));
   }
   async updateEvent(id: string, p: EventPatch) {
@@ -80,6 +80,7 @@ export class SupabaseRepo implements Repo {
     if (p.basePrice !== undefined) m.base_price = p.basePrice;
     if (p.ageRule !== undefined) m.age_rule = p.ageRule;
     if (p.hasKit !== undefined) m.has_kit = p.hasKit;
+    if (p.exemptCode !== undefined) m.exempt_code = p.exemptCode;
     if (p.registrationOpen !== undefined) m.registration_open = p.registrationOpen;
     return toEvent(check(await this.db.from("events").update(m).eq("id", id).select("*").single()));
   }
@@ -128,7 +129,7 @@ export class SupabaseRepo implements Repo {
       team: i.team, whatsapp: i.whatsapp, birth_date: i.birthDate, gender: i.gender, access_token: i.accessToken, weight_kg: i.weightKg,
       emergency_contact: i.emergencyContact, terms_accepted: i.termsAccepted,
       terms_accepted_at: i.termsAccepted ? new Date().toISOString() : null, source: i.source,
-      payment_status: i.paymentStatus, flags: i.flags,
+      payment_status: i.paymentStatus, exempt: i.exempt ?? false, flags: i.flags,
     };
     return toReg(check(await this.db.from("registrations").insert(row).select("*").single()));
   }
@@ -157,6 +158,7 @@ export class SupabaseRepo implements Repo {
     if (p.weightKg !== undefined) m.weight_kg = p.weightKg;
     if (p.kitDeliveredAt !== undefined) m.kit_delivered_at = p.kitDeliveredAt;
     if (p.checkedInAt !== undefined) m.checked_in_at = p.checkedInAt;
+    if (p.exempt !== undefined) m.exempt = p.exempt;
     return toReg(check(await this.db.from("registrations").update(m).eq("id", id).select("*").single()));
   }
   async checkIn(id: string, at: string) {

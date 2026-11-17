@@ -16,6 +16,7 @@ export interface EventFields {
   basePrice: number;
   ageRule: AgeRule;
   hasKit: boolean;
+  exemptCode: string | null;
 }
 
 async function send(url: string, method: string, body?: object): Promise<{ ok: boolean; error?: string; slug?: string }> {
@@ -61,6 +62,11 @@ function EventFieldsInputs({ v }: { v?: Partial<EventFields> }) {
         <span><strong>Este evento entrega kit</strong><br /><span className="hint">Camisa, numeral etc. Se marcado, a tela de entrada ganha o botão “Entregar kit”. Se não, só a presença é registrada.</span></span>
       </label>
       <div className="sm:col-span-2">
+        <label className="label" htmlFor="ev-code">Código de isenção da organização <span className="hint font-normal">(opcional)</span></label>
+        <input id="ev-code" name="exemptCode" className="field" autoComplete="off" defaultValue={v?.exemptCode ?? ""} placeholder="ex.: equipe-2026" />
+        <p className="hint mt-1">Quem digitar este código no formulário se inscreve isento, sem Pix. Passe só para a organização e troque se vazar. Deixe em branco para desligar.</p>
+      </div>
+      <div className="sm:col-span-2">
         <label className="label" htmlFor="ev-desc">Recado para os atletas</label>
         <textarea id="ev-desc" name="description" rows={3} className="field" defaultValue={v?.description ?? ""} placeholder="Regras, horário de largada, local da retirada do kit…" />
       </div>
@@ -71,7 +77,7 @@ function EventFieldsInputs({ v }: { v?: Partial<EventFields> }) {
 function readEvent(f: FormData): EventFields {
   return {
     name: val(f, "name"), eventDate: val(f, "eventDate"), city: val(f, "city") || null, description: val(f, "description") || null,
-    pixKey: val(f, "pixKey") || null, basePrice: Number(val(f, "basePrice").replace(",", ".")), ageRule: val(f, "ageRule") as AgeRule, hasKit: f.get("hasKit") === "on",
+    pixKey: val(f, "pixKey") || null, basePrice: Number(val(f, "basePrice").replace(",", ".")), ageRule: val(f, "ageRule") as AgeRule, hasKit: f.get("hasKit") === "on", exemptCode: val(f, "exemptCode") || null,
   };
 }
 

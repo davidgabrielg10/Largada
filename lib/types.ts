@@ -40,6 +40,8 @@ export interface EventRow {
   ageRule: AgeRule;
   /** O evento entrega kit na retirada? (opcional: muitos não entregam) */
   hasKit: boolean;
+  /** Código que a organização digita no formulário para se inscrever isenta. Nunca vai ao navegador do público. */
+  exemptCode: string | null;
   isDemo: boolean;
 }
 
@@ -83,6 +85,8 @@ export interface Registration {
   source: RegistrationSource;
   status: RegistrationStatus;
   paymentStatus: PaymentStatus;
+  /** Isento de pagamento (organização, convidados). Conta como inscrito e tem número, mas não entra no faturamento. */
+  exempt: boolean;
   flags: Flag[];
   /** Chave secreta do link da ficha do atleta. */
   accessToken: string;

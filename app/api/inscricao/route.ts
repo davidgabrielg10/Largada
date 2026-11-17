@@ -15,12 +15,13 @@ export async function POST(req: Request) {
     const data = registrationSchema.parse(formToObject(form));
     if (!data.termsAccepted) return err("É preciso aceitar o termo de responsabilidade.");
     if (!data.gender) return err("Informe o sexo.");
-    const { registration, category, event } = await register({ ...data, eventSlug: slug, file: await fileFrom(form) });
+    const { registration, category, event } = await register({ ...data, eventSlug: slug, file: await fileFrom(form) }); // data inclui exemptCode
     return ok({
       id: registration.id,
       accessToken: registration.accessToken,
       bibLabel: registration.bibLabel,
       paymentStatus: registration.paymentStatus,
+      exempt: registration.exempt,
       flags: registration.flags.filter((f) => f === "no_receipt" || f === "amount_low" || f === "duplicate_receipt"),
       category: category.name,
       price: category.price,

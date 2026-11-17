@@ -13,6 +13,7 @@ export const EVENT: EventRow = {
   nextBib: 1,
   ageRule: "event_date",
   hasKit: false,
+  exemptCode: null,
   isDemo: true,
 };
 
@@ -57,6 +58,7 @@ export function reg(over: Partial<Registration> & { id: string; bibNumber: numbe
     source: "link",
     status: "active",
     paymentStatus: "verified",
+    exempt: false,
     flags: [],
     accessToken: `tok-${over.id}`,
     kitDeliveredAt: null,

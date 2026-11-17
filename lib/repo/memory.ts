@@ -40,7 +40,7 @@ export class MemoryRepo implements Repo {
   async getEventById(id: string) { const e = this.events.find((x) => x.id === id); return e ? { ...e } : null; }
   async createEvent(i: NewEvent) {
     if (this.events.some((e) => e.slug === i.slug)) throw new RepoError("conflict", "Já existe um evento com esse endereço.");
-    const ev: EventRow = { ...i, id: randomUUID(), registrationOpen: true, nextBib: 1, isDemo: false };
+    const ev: EventRow = { ...i, exemptCode: i.exemptCode ?? null, id: randomUUID(), registrationOpen: true, nextBib: 1, isDemo: false };
     this.events.push(ev);
     return { ...ev };
   }
@@ -92,7 +92,7 @@ export class MemoryRepo implements Repo {
       id: randomUUID(), eventId: i.eventId, categoryId: i.categoryId, bibNumber: bib, bibLabel: formatBib(bib),
       fullName: i.fullName, email: i.email, city: i.city, team: i.team, whatsapp: i.whatsapp,
       birthDate: i.birthDate, gender: i.gender, weightKg: i.weightKg, emergencyContact: i.emergencyContact,
-      accessToken: i.accessToken, kitDeliveredAt: null, checkedInAt: null,
+      accessToken: i.accessToken, kitDeliveredAt: null, checkedInAt: null, exempt: i.exempt ?? false,
       termsAcceptedAt: i.termsAccepted ? new Date().toISOString() : null, source: i.source,
       status: "active", paymentStatus: i.paymentStatus, flags: [...i.flags], isDemo: ev.isDemo,
       createdAt: new Date().toISOString(),

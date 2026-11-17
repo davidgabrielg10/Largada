@@ -16,6 +16,7 @@ export interface EventInput {
   basePrice: number;
   ageRule: AgeRule;
   hasKit: boolean;
+  exemptCode?: string | null;
 }
 
 export interface CategoryInput {

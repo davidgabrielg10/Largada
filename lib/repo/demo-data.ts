@@ -8,7 +8,7 @@ export const demoEvent = (): EventRow => ({
   id: DEMO_EVENT_ID, slug: "rachao-nazare", name: "2º Rachão Ritmo & Giro — Etapa Nazaré da Mata",
   eventDate: "2026-12-20", city: "Nazaré da Mata – PE",
   description: "Prova de ciclismo de estrada com várias categorias. Inscrição pelo link, sem aplicativo.",
-  pixKey: "chave-pix-demo@exemplo.com", basePrice: 80, registrationOpen: true, nextBib: 1, ageRule: "event_date", hasKit: false, isDemo: true,
+  pixKey: "chave-pix-demo@exemplo.com", basePrice: 80, registrationOpen: true, nextBib: 1, ageRule: "event_date", hasKit: false, exemptCode: null, isDemo: true,
 });
 
 const CATS: [string, number, number | null, number | null, number | null, number][] = [
@@ -54,7 +54,7 @@ export const demoRegistrations = (): Registration[] =>
     id: `reg-${i + 1}`, eventId: DEMO_EVENT_ID, categoryId: `cat-${cat + 1}`,
     bibNumber: i + 1, bibLabel: formatBib(i + 1), fullName, email: null, city, team,
     whatsapp: `819${String(90000000 + i * 1111111).slice(0, 8)}`, birthDate,
-    gender: fullName.startsWith("Ana ") ? "F" : "M", weightKg: null, accessToken: `demo${String(i + 1).padStart(3, "0")}ficha`, kitDeliveredAt: null, checkedInAt: null,
+    gender: fullName.startsWith("Ana ") ? "F" : "M", weightKg: null, accessToken: `demo${String(i + 1).padStart(3, "0")}ficha`, kitDeliveredAt: null, checkedInAt: null, exempt: false,
     emergencyContact: null, termsAcceptedAt: "2026-11-10T12:00:00.000Z", source: "link", status: "active",
     paymentStatus: paymentStatus as Registration["paymentStatus"],
     flags: paymentStatus === "review" ? ["low_confidence"] : paymentStatus === "mismatch" ? ["amount_low"] : [],

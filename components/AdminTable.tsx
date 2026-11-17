@@ -15,6 +15,7 @@ export interface Row {
   categoryId: string;
   status: "active" | "cancelled";
   payment: PaymentStatus;
+  exempt: boolean;
   flags: Flag[];
   receiptUrls: string[];
   waConfirm: string; // link wa.me com a mensagem pronta
@@ -67,7 +68,7 @@ export function AdminTable({ rows, categories, hasKit }: { rows: Row[]; categori
     const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
     const head = ["Número", "Nome", "Cidade", "Equipe", "Categoria", "Pagamento", "Presença", ...(hasKit ? ["Kit"] : []), "Situação"];
     const lines = [head.join(",")].concat(
-      rows.map((r) => [r.bib, r.name, r.city ?? "", r.team ?? "", catName(r.categoryId), PAY[r.payment][0], r.checkedInAt ? formatClock(r.checkedInAt) : "", ...(hasKit ? [r.kit ? "Entregue" : ""] : []), r.status === "active" ? "Ativa" : "Cancelada"].map(esc).join(",")),
+      rows.map((r) => [r.bib, r.name, r.city ?? "", r.team ?? "", catName(r.categoryId), r.exempt ? "Isento" : PAY[r.payment][0], r.checkedInAt ? formatClock(r.checkedInAt) : "", ...(hasKit ? [r.kit ? "Entregue" : ""] : []), r.status === "active" ? "Ativa" : "Cancelada"].map(esc).join(",")),
     );
     const url = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }));
     const a = Object.assign(document.createElement("a"), { href: url, download: "inscritos.csv" });
@@ -87,7 +88,7 @@ export function AdminTable({ rows, categories, hasKit }: { rows: Row[]; categori
       {error && <p role="alert" className="mt-3 text-red-800">{error}</p>}
       <div className="mt-4 space-y-3">
         {shown.map((r) => {
-          const [label, tone] = PAY[r.payment];
+          const [label, tone] = r.exempt ? (["Isento", "pill-ok"] as const) : PAY[r.payment];
           const busy = busyId === r.id;
           return (
             <article key={r.id} className={`card p-4 ${r.status === "cancelled" ? "opacity-60" : ""}`}>
@@ -113,6 +114,9 @@ export function AdminTable({ rows, categories, hasKit }: { rows: Row[]; categori
                 {r.status === "active" ? (
                   <>
                     {r.payment !== "verified" && <button disabled={busy} className="btn btn-red btn-sm" onClick={() => patch(r.id, { action: "approve" })}>Aprovar pagamento</button>}
+                    {r.exempt
+                      ? <button disabled={busy} className="btn btn-line btn-sm" onClick={() => patch(r.id, { action: "unexempt" })}>Tirar isenção</button>
+                      : <button disabled={busy} className="btn btn-line btn-sm" onClick={() => confirm(`Isentar ${r.name} do pagamento? Ele fica liberado e fora do faturamento.`) && patch(r.id, { action: "exempt" })}>Isentar</button>}
                     {r.payment !== "mismatch" && r.payment !== "verified" && <button disabled={busy} className="btn btn-line btn-sm" onClick={() => patch(r.id, { action: "reject" })}>Marcar divergente</button>}
                     <button disabled={busy} className="btn btn-line btn-sm" onClick={() => patch(r.id, { action: r.checkedInAt ? "uncheckin" : "checkin" })}>{r.checkedInAt ? "Desfazer presença" : "Marcar presença"}</button>
                     {hasKit && <button disabled={busy} className="btn btn-line btn-sm" onClick={() => patch(r.id, { action: r.kit ? "unkit" : "kit" })}>{r.kit ? "Desfazer kit" : "Entregar kit"}</button>}

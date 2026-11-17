@@ -37,7 +37,7 @@ export default async function Configure({ params }: PageProps<"/admin/[slug]/con
         <h2 className="display text-4xl">Dados do evento</h2>
         <EventSettings slug={slug} event={{
           name: event.name, eventDate: event.eventDate, city: event.city, description: event.description,
-          pixKey: event.pixKey, basePrice: event.basePrice, ageRule: event.ageRule, hasKit: event.hasKit,
+          pixKey: event.pixKey, basePrice: event.basePrice, ageRule: event.ageRule, hasKit: event.hasKit, exemptCode: event.exemptCode,
         }} />
       </section>
       <section className="space-y-3">

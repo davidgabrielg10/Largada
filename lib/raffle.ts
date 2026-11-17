@@ -4,7 +4,7 @@ import type { Registration } from "./types";
 /** Concorre quem está ativo, com pagamento conferido e que ainda não foi sorteado. */
 export function eligibleForRaffle(regs: Registration[], alreadyDrawn: Set<string>): Registration[] {
   return regs.filter(
-    (r) => r.status === "active" && r.paymentStatus === "verified" && !alreadyDrawn.has(r.id),
+    (r) => r.status === "active" && r.paymentStatus === "verified" && !r.exempt && !alreadyDrawn.has(r.id),
   );
 }
 

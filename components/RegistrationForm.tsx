@@ -25,6 +25,7 @@ export interface Result {
   accessToken?: string;
   bibLabel: string;
   paymentStatus: "pending" | "verified" | "review" | "mismatch";
+  exempt?: boolean;
   flags: string[];
   category: string;
   price: number;
@@ -40,6 +41,7 @@ export function RegistrationForm({ eventSlug, ageRefDate, pixKey, categories, en
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [orgCode, setOrgCode] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const category = categories.find((c) => c.id === categoryId);
@@ -152,8 +154,20 @@ export function RegistrationForm({ eventSlug, ageRefDate, pixKey, categories, en
         </div>
       </div>
 
-      <div className="rounded-xl bg-paper border border-line p-4 space-y-3">
+      {!assisted && (
+        <details className="rounded-xl border border-line px-4 py-3">
+          <summary className="cursor-pointer font-semibold">Faço parte da organização do evento</summary>
+          <div className="mt-3">
+            <label className="label" htmlFor="exemptCode">Código da organização</label>
+            <input id="exemptCode" name="exemptCode" className="field" autoComplete="off" autoCapitalize="none" value={orgCode} onChange={(e) => setOrgCode(e.target.value)} />
+            <p className="hint mt-1">Quem recebeu o código da organização se inscreve sem pagar. Os demais ignoram este campo.</p>
+          </div>
+        </details>
+      )}
+
+      <div className={`rounded-xl bg-paper border border-line p-4 space-y-3 ${orgCode.trim() ? "opacity-50" : ""}`}>
         <p className="font-semibold">Pagamento por Pix{category ? ` — ${formatBRL(category.price)}` : ""}</p>
+        {orgCode.trim() && <p className="hint">Com o código da organização você não precisa pagar nem enviar comprovante.</p>}
         {pixKey ? (
           <div className="flex flex-wrap items-center gap-2">
             <code className="break-all rounded bg-white px-2 py-1 border border-line">{pixKey}</code>

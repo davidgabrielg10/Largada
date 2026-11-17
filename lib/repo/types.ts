@@ -19,6 +19,7 @@ export interface NewRegistration {
   accessToken: string;
   source: RegistrationSource;
   paymentStatus: PaymentStatus;
+  exempt?: boolean;
   flags: Flag[];
 }
 
@@ -34,6 +35,7 @@ export interface RegistrationPatch {
   weightKg?: number | null;
   kitDeliveredAt?: string | null;
   checkedInAt?: string | null;
+  exempt?: boolean;
 }
 
 export interface NewEvent {
@@ -46,6 +48,7 @@ export interface NewEvent {
   basePrice: number;
   ageRule: AgeRule;
   hasKit: boolean;
+  exemptCode?: string | null;
 }
 export type EventPatch = Partial<Omit<NewEvent, "slug">> & { registrationOpen?: boolean };
 
